@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Browse Music | SoundStop</title>
+  <style>
+    body {
+      margin: 0;
+      background: #f5f6fa;
+      color: #202635;
+      font: 1rem/1.5 system-ui, sans-serif;
+    }
+
+    main {
+      max-width: 64rem;
+      margin: 2rem auto;
+      padding: 0 1rem;
+    }
+
+    label { display: block; font-weight: 600; }
+
+    input, button {
+      padding: 0.55rem;
+      font: inherit;
+    }
+
+    #products {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr));
+      gap: 1rem;
+      padding: 0;
+      list-style: none;
+    }
+
+    #products li {
+      padding: 1rem;
+      background: white;
+      border: 1px solid #d9deea;
+      border-radius: 0.6rem;
+    }
+
+    #products h2 {
+      margin: 0 0 0.5rem;
+      font-size: 1.15rem;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <p>SoundStop Marketplace</p>
+    <h1>Browse music</h1>
+
+    <label for="search">Search loaded listings by title or seller</label>
+    <input id="search" type="search" placeholder="Try Rumours">
+
+    <p id="status" role="status"></p>
+    <ul id="products" aria-label="Product listings"></ul>
+    <button id="load-more" type="button">Load listings</button>
+  </main>
+
+  <script>
+    const endpoint = "http://localhost:5000/api/products";
+    const pageSize = 20;
+    const products = [];
+    const search = document.querySelector("#search");
+    const status = document.querySelector("#status");
+    const productList = document.querySelector("#products");
+    const loadMore = document.querySelector("#load-more");
+    const dollars = new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency: "USD",
+    });
+
+    function renderProducts() {
+      const query = search.value.trim().toLowerCase();
+      const matches = products.filter((product) =>
+        [product.title, product.store_name].some((value) =>
+          (value ?? "").toLowerCase().includes(query),
+        ),
+      );
+
+      productList.replaceChildren();
+
+      for (const product of matches) {
+        const card = document.createElement("li");
+        const title = document.createElement("h2");
+        const details = document.createElement("p");
+        const seller = document.createElement("p");
+
+        title.textContent = product.title;
+        const price = dollars.format(Number(product.price_cents) / 100);
+        const condition = product.condition.replaceAll("_", " ");
+        details.textContent = `${price} · ${condition}`;
+        seller.textContent = `Sold by ${product.store_name}`;
+
+        card.append(title, details, seller);
+        productList.append(card);
+      }
+
+      if (products.length === 0) {
+        status.textContent = "No products are available yet.";
+      } else if (matches.length === 0) {
+        status.textContent = "No matches among the loaded listings.";
+      } else {
+        status.textContent = `Showing ${matches.length} of ${products.length} loaded listings.`;
+      }
+    }
+
+    async function loadProducts() {
+      loadMore.disabled = true;
+      status.textContent = "Loading listings…";
+
+      try {
+        const response = await fetch(
+          `${endpoint}?limit=${pageSize}&offset=${products.length}`,
+        );
+
+        if (!response.ok) {
+          throw new Error(`Product API returned HTTP ${response.status}`);
+        }
+
+        const data = await response.json();
+        if (!data.success || !Array.isArray(data.products)) {
+          throw new Error("Unexpected product API response");
+        }
+
+        products.push(...data.products);
+        renderProducts();
+        loadMore.hidden = data.products.length < pageSize;
+        loadMore.textContent = "Load more";
+      } catch (error) {
+        console.error(error);
+        status.textContent =
+          "Could not load listings. Check that SoundStop is running, then retry.";
+        loadMore.textContent = "Retry";
+      } finally {
+        loadMore.disabled = false;
+      }
+    }
+
+    search.addEventListener("input", renderProducts);
+    loadMore.addEventListener("click", loadProducts);
+    loadProducts();
+  </script>
+</body>
+</html>
