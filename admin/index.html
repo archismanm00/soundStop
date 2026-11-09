@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Listing Moderation | SoundStop</title>
+  <link rel="stylesheet" href="admin.css">
+  <script src="admin.js" defer></script>
+</head>
+<body>
+  <main>
+    <p>SoundStop Admin</p>
+    <h1>Listing Moderation</h1>
+    <p>Demo with sample listings</p>
+
+    <label for="search">Search by listing title or seller</label>
+    <input id="search" type="search" placeholder="Try Rumours">
+
+    <p id="feedback" role="status"></p>
+
+    <table aria-label="Marketplace listings">
+      <thead>
+        <tr>
+          <th scope="col">Listing</th>
+          <th scope="col">Seller</th>
+          <th scope="col">Status</th>
+          <th scope="col">Action</th>
+        </tr>
+      </thead>
+      <tbody id="listings"></tbody>
+    </table>
+  </main>
+
+  <dialog id="remove-dialog" aria-labelledby="remove-heading">
+    <form id="remove-form">
+      <h2 id="remove-heading">Remove listing</h2>
+      <p id="listing-name"></p>
+
+      <label for="reason">Reason for removal</label>
+      <textarea id="reason" rows="3" maxlength="250" required></textarea>
+
+      <button id="cancel" type="button">Cancel</button>
+      <button type="submit">Confirm removal</button>
+    </form>
+  </dialog>
+</body>
+</html>
